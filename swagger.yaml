@@ -1,0 +1,221 @@
+---
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  "/api/votes/teams":
+    post:
+      tags:
+      - vote-controller
+      operationId: voteForTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/VoteRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  "/api/votes/parts":
+    post:
+      tags:
+      - vote-controller
+      operationId: voteForPartLead
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/VoteRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  "/api/auth/signup":
+    post:
+      tags:
+      - auth-controller
+      operationId: signUp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SignUpRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SignUpResponse"
+  "/api/auth/login":
+    post:
+      tags:
+      - auth-controller
+      operationId: logIn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LogInRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/LogInResponse"
+  "/api/votes/status":
+    get:
+      tags:
+      - vote-controller
+      operationId: getVoteStatus
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/VoteStatusResponse"
+  "/api/candidates/teams":
+    get:
+      tags:
+      - candidate-controller
+      operationId: getTeamCandidates
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Team"
+  "/api/candidates/parts":
+    get:
+      tags:
+      - candidate-controller
+      operationId: getPartLeadCandidates
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Member"
+components:
+  schemas:
+    VoteRequest:
+      type: object
+      properties:
+        targetId:
+          type: integer
+          format: int64
+    SignUpRequest:
+      type: object
+      properties:
+        loginId:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          minLength: 1
+        realName:
+          type: string
+          minLength: 1
+        part:
+          type: string
+          enum:
+          - FRONTEND
+          - BACKEND
+        team:
+          type: string
+        isPartLeadCandidate:
+          type: boolean
+      required:
+      - isPartLeadCandidate
+      - part
+    SignUpResponse:
+      type: object
+      properties:
+        email:
+          type: string
+        partType:
+          type: string
+        isPartLeadCandidate:
+          type: boolean
+    LogInRequest:
+      type: object
+      properties:
+        loginId:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+    LogInResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+    VoteStatusResponse:
+      type: object
+      properties:
+        teamVote:
+          type: boolean
+        partLeadVote:
+          type: boolean
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        loginId:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        part:
+          type: string
+          enum:
+          - FRONTEND
+          - BACKEND
+        realName:
+          type: string
+        team:
+          "$ref": "#/components/schemas/Team"
+        partLeadCandidate:
+          type: boolean
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        teamName:
+          type: string
+        members:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Member"
