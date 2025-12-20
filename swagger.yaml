@@ -91,6 +91,18 @@ paths:
             "*/*":
               schema:
                 "$ref": "#/components/schemas/VoteStatusResponse"
+  "/api/votes/results":
+    get:
+      tags:
+      - vote-controller
+      operationId: getVoteResult
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TotalVoteResultResponse"
   "/api/members/me":
     get:
       tags:
@@ -161,11 +173,18 @@ components:
           - BACKEND
         team:
           type: string
+          enum:
+          - STORIX
+          - MODELLY
+          - CATCHUP
+          - MENUAL
+          - DIGGINDIE
         isPartLeadCandidate:
           type: boolean
       required:
       - isPartLeadCandidate
       - part
+      - team
     SignUpResponse:
       type: object
       properties:
@@ -196,6 +215,28 @@ components:
           type: boolean
         partLeadVote:
           type: boolean
+    TotalVoteResultResponse:
+      type: object
+      properties:
+        teamVoteResults:
+          type: array
+          items:
+            "$ref": "#/components/schemas/VoteResultResponse"
+        partLeadVoteResults:
+          type: array
+          items:
+            "$ref": "#/components/schemas/VoteResultResponse"
+    VoteResultResponse:
+      type: object
+      properties:
+        targetId:
+          type: integer
+          format: int64
+        targetName:
+          type: string
+        voteCount:
+          type: integer
+          format: int64
     MemberStatusResponse:
       type: object
       properties:
@@ -204,6 +245,13 @@ components:
           format: int64
         name:
           type: string
+        team:
+          type: string
+        part:
+          type: string
+          enum:
+          - FRONTEND
+          - BACKEND
         hasVotedForTeam:
           type: boolean
         hasVotedForPartLead:
@@ -253,4 +301,3 @@ components:
           type: string
         part:
           type: string
-
