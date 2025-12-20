@@ -128,7 +128,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/Team"
+                  "$ref": "#/components/schemas/TeamCandidateResponse"
   "/api/candidates/parts":
     get:
       tags:
@@ -256,41 +256,14 @@ components:
           type: boolean
         hasVotedForPartLead:
           type: boolean
-    Member:
+    TeamCandidateResponse:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        loginId:
+        name:
           type: string
-        password:
-          type: string
-        email:
-          type: string
-        part:
-          type: string
-          enum:
-          - FRONTEND
-          - BACKEND
-        realName:
-          type: string
-        team:
-          "$ref": "#/components/schemas/Team"
-        partLeadCandidate:
-          type: boolean
-    Team:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        teamName:
-          type: string
-        members:
-          type: array
-          items:
-            "$ref": "#/components/schemas/Member"
     PartLeadCandidateResponse:
       type: object
       properties:
