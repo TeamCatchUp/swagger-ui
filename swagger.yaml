@@ -91,6 +91,18 @@ paths:
             "*/*":
               schema:
                 "$ref": "#/components/schemas/VoteStatusResponse"
+  "/api/members/me":
+    get:
+      tags:
+      - member-controller
+      operationId: getMemberStatus
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MemberStatusResponse"
   "/api/candidates/teams":
     get:
       tags:
@@ -118,7 +130,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/Member"
+                  "$ref": "#/components/schemas/PartLeadCandidateResponse"
 components:
   schemas:
     VoteRequest:
@@ -184,6 +196,18 @@ components:
           type: boolean
         partLeadVote:
           type: boolean
+    MemberStatusResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        hasVotedForTeam:
+          type: boolean
+        hasVotedForPartLead:
+          type: boolean
     Member:
       type: object
       properties:
@@ -219,3 +243,14 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/Member"
+    PartLeadCandidateResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        part:
+          type: string
+
