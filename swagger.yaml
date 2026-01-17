@@ -1,23 +1,22 @@
 ---
 openapi: 3.1.0
 info:
-  title: OpenAPI definition
-  version: v0
+  title: CatchUp API
+  description: CatchUp 프로젝트 API 문서
+  version: 1.0.0
 servers:
 - url: http://localhost:8080
-  description: Generated server url
+  description: Server URL
+- url: http://localhost:8080
+  description: Local Server
+security:
+- Bearer Authentication: []
 paths:
-  "/api/votes/teams":
+  "/api/notion/sync/users":
     post:
       tags:
-      - vote-controller
-      operationId: voteForTeam
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/VoteRequest"
-        required: true
+      - notion-sync-controller
+      operationId: syncUsers
       responses:
         '200':
           description: OK
@@ -25,17 +24,11 @@ paths:
             "*/*":
               schema:
                 type: string
-  "/api/votes/parts":
+  "/api/notion/sync/metadata":
     post:
       tags:
-      - vote-controller
-      operationId: voteForPartLead
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/VoteRequest"
-        required: true
+      - notion-sync-controller
+      operationId: syncPageMetadata
       responses:
         '200':
           description: OK
@@ -43,16 +36,28 @@ paths:
             "*/*":
               schema:
                 type: string
-  "/api/auth/signup":
+  "/api/notion/sync/full":
     post:
       tags:
-      - auth-controller
-      operationId: signUp
+      - notion-sync-controller
+      operationId: fullSync
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  "/api/jira/sync/retry":
+    post:
+      tags:
+      - jira-sync-controller
+      operationId: retrySync
       requestBody:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/SignUpRequest"
+              "$ref": "#/components/schemas/JiraSyncRequest"
         required: true
       responses:
         '200':
@@ -60,17 +65,19 @@ paths:
           content:
             "*/*":
               schema:
-                "$ref": "#/components/schemas/SignUpResponse"
-  "/api/auth/login":
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/jira/sync/retry/projects":
     post:
       tags:
-      - auth-controller
-      operationId: logIn
+      - jira-sync-controller
+      operationId: retryFailedProjects
       requestBody:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/LogInRequest"
+              "$ref": "#/components/schemas/JiraSyncRequest"
         required: true
       responses:
         '200':
@@ -78,42 +85,122 @@ paths:
           content:
             "*/*":
               schema:
-                "$ref": "#/components/schemas/LogInResponse"
-  "/api/votes/status":
-    get:
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/jira/sync/full":
+    post:
       tags:
-      - vote-controller
-      operationId: getVoteStatus
+      - jira-sync-controller
+      operationId: fullSync_1
       responses:
         '200':
           description: OK
           content:
             "*/*":
               schema:
-                "$ref": "#/components/schemas/VoteStatusResponse"
-  "/api/votes/results/teams":
-    get:
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/github/sync/retry":
+    post:
       tags:
-      - vote-controller
-      operationId: getTeamVoteResult
+      - github-sync-controller
+      operationId: retryFromStep
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/GithubRetryRequest"
+        required: true
       responses:
         '200':
           description: OK
           content:
             "*/*":
               schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/VoteResultResponse"
-  "/api/votes/results/parts/{part}":
-    get:
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/github/sync/full":
+    post:
       tags:
-      - vote-controller
-      operationId: getPartVoteResult
+      - github-sync-controller
+      operationId: fullSync_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/GithubFullSyncRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/documents":
+    post:
+      tags:
+      - meili-search-controller
+      operationId: addOrUpdateDocument
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/MeiliSearchDocumentRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+  "/api/chat":
+    post:
+      tags:
+      - chat-controller
+      operationId: getChatStreamingResponse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ClientChatRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ClientChatResponse"
+  "/api/chat/resume":
+    post:
+      tags:
+      - chat-controller
+      operationId: resumeChatStreamingResponse
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ClientChatResumeRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ClientChatResponse"
+  "/api/auth/refresh":
+    post:
+      tags:
+      - auth-controller
+      operationId: refreshToken
       parameters:
-      - name: part
-        in: path
-        required: true
+      - name: refreshToken
+        in: cookie
+        required: false
         schema:
           type: string
       responses:
@@ -122,26 +209,77 @@ paths:
           content:
             "*/*":
               schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/VoteResultResponse"
-  "/api/members/me":
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/auth/logout":
+    post:
+      tags:
+      - auth-controller
+      operationId: logout
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  "/api/search":
+    get:
+      tags:
+      - meili-search-controller
+      operationId: search
+      parameters:
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: indices
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MeiliSearchQueryResponse"
+  "/api/notification/subscribe":
+    get:
+      tags:
+      - notification-controller
+      operationId: subscribe
+      responses:
+        '200':
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                "$ref": "#/components/schemas/SseEmitter"
+  "/api/me":
     get:
       tags:
       - member-controller
-      operationId: getMemberStatus
+      operationId: getMyInfo
       responses:
         '200':
           description: OK
           content:
             "*/*":
               schema:
-                "$ref": "#/components/schemas/MemberStatusResponse"
-  "/api/candidates/teams":
+                "$ref": "#/components/schemas/MemberInfoResponse"
+  "/api/chatrooms":
     get:
       tags:
-      - candidate-controller
-      operationId: getTeamCandidates
+      - chat-room-controller
+      operationId: getChatRooms
       responses:
         '200':
           description: OK
@@ -150,138 +288,399 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/TeamCandidateResponse"
-  "/api/candidates/parts":
+                  "$ref": "#/components/schemas/ChatRoomResponse"
+  "/api/chatrooms/messages":
     get:
       tags:
-      - candidate-controller
-      operationId: getPartLeadCandidates
+      - chat-room-controller
+      operationId: getChatHistory
+      parameters:
+      - name: sessionId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          "$ref": "#/components/schemas/Pageable"
       responses:
         '200':
           description: OK
           content:
             "*/*":
               schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/PartLeadCandidateResponse"
+                "$ref": "#/components/schemas/SliceChatHistoryResponse"
 components:
   schemas:
-    VoteRequest:
+    JiraSyncRequest:
       type: object
       properties:
-        targetId:
-          type: integer
-          format: int64
-    SignUpRequest:
-      type: object
-      properties:
-        loginId:
-          type: string
-          minLength: 1
-        password:
-          type: string
-          minLength: 1
-        email:
-          type: string
-          minLength: 1
-        realName:
-          type: string
-          minLength: 1
-        part:
+        startFrom:
           type: string
           enum:
-          - FRONTEND
-          - BACKEND
-        team:
-          type: string
-          enum:
-          - STORIX
-          - MODELLY
-          - CATCHUP
-          - MENUAL
-          - DIGGINDIE
-        isPartLeadCandidate:
-          type: boolean
+          - PROJECTS
+          - USERS
+          - ISSUE_TYPES
+          - PROJECT_ISSUES
+          - COMPLETED
+        projectKeys:
+          type: array
+          items:
+            type: string
       required:
-      - isPartLeadCandidate
-      - part
-      - team
-    SignUpResponse:
+      - startFrom
+    GithubRetryRequest:
       type: object
       properties:
-        email:
-          type: string
-        partType:
-          type: string
-        isPartLeadCandidate:
-          type: boolean
-    LogInRequest:
-      type: object
-      properties:
-        loginId:
+        owner:
           type: string
           minLength: 1
-        password:
+        repository:
           type: string
           minLength: 1
-    LogInResponse:
-      type: object
-      properties:
-        accessToken:
+        branch:
           type: string
-    VoteStatusResponse:
-      type: object
-      properties:
-        teamVote:
-          type: boolean
-        partLeadVote:
-          type: boolean
-    VoteResultResponse:
-      type: object
-      properties:
-        targetId:
-          type: integer
-          format: int64
-        targetName:
-          type: string
-        voteCount:
-          type: integer
-          format: int64
-    MemberStatusResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        team:
-          type: string
-        part:
+          minLength: 1
+        startFrom:
           type: string
           enum:
-          - FRONTEND
-          - BACKEND
-        hasVotedForTeam:
+          - REPOSITORY_INFO
+          - COMMITS
+          - PULL_REQUESTS
+          - ISSUES
+          - COMMENTS
+          - REVIEWS
+          - FILE_CHANGES
+          - COMPLETED
+          minLength: 1
+    GithubFullSyncRequest:
+      type: object
+      properties:
+        owner:
+          type: string
+          minLength: 1
+        repository:
+          type: string
+          minLength: 1
+        branch:
+          type: string
+          minLength: 1
+    JiraIssueDocument:
+      allOf:
+      - "$ref": "#/components/schemas/MeiliSearchDocument"
+      - type: object
+        properties:
+          id:
+            type: string
+          summary:
+            type: string
+          description:
+            type: string
+          createdAt:
+            type: string
+          resolutionDate:
+            type: string
+          assigneeId:
+            type: string
+          creatorId:
+            type: string
+          reporterId:
+            type: string
+    MeiliSearchDocument:
+      type: object
+      discriminator:
+        propertyName: documentType
+      properties:
+        primaryKeyFieldName:
+          type: string
+        indexName:
+          type: string
+        documentType:
+          type: string
+      required:
+      - documentType
+    MeiliSearchDocumentRequest:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            oneOf:
+            - "$ref": "#/components/schemas/JiraIssueDocument"
+    ClientChatRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          minLength: 1
+        sessionId:
+          type: string
+          format: uuid
+        indexList:
+          type: array
+          items:
+            type: string
+      required:
+      - indexList
+      - sessionId
+    ClientChatResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        answer:
+          type: string
+          minLength: 1
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClientSource"
+      required:
+      - sessionId
+    ClientSource:
+      type: object
+      properties:
+        index:
+          type: integer
+          format: int32
+        is_cited:
           type: boolean
-        hasVotedForPartLead:
-          type: boolean
-    TeamCandidateResponse:
+        source_type:
+          type: string
+        text:
+          type: string
+        file_path:
+          type: string
+        category:
+          type: string
+        source:
+          type: string
+        html_url:
+          type: string
+        language:
+          type: string
+    ClientChatResumeRequest:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        userSelectedPullRequests:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UserSelectedPullRequest"
+    UserSelectedPullRequest:
+      type: object
+      properties:
+        pr_number:
+          type: integer
+          format: int32
+        repo_name:
+          type: string
+        owner:
+          type: string
+    FacetRating:
+      type: object
+      properties:
+        min:
+          type: number
+          format: double
+        max:
+          type: number
+          format: double
+    FacetsByIndexInfo:
+      type: object
+      properties:
+        distribution:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
+        stats:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/FacetRating"
+    MeiliSearchQueryResponse:
+      type: object
+      properties:
+        searchResult:
+          "$ref": "#/components/schemas/ResultsMultiSearchResult"
+    MultiSearchResult:
+      type: object
+      properties:
+        indexUid:
+          type: string
+        hits:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: object
+        facetDistribution:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
+        facetStats:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/FacetRating"
+        processingTimeMs:
+          type: integer
+          format: int32
+        query:
+          type: string
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        estimatedTotalHits:
+          type: integer
+          format: int32
+        facetsByIndex:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/FacetsByIndexInfo"
+    ResultsMultiSearchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MultiSearchResult"
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int32
+    SseEmitter:
+      type: object
+      properties:
+        timeout:
+          type: integer
+          format: int64
+    MemberInfoResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+    ChatRoomResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        lastActiveTime:
+          type: string
+          format: date-time
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    ChatHistoryResponse:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        name:
+        role:
           type: string
-    PartLeadCandidateResponse:
+        content:
+          type: string
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClientSource"
+        createdAt:
+          type: string
+          format: date-time
+    PageableObject:
       type: object
       properties:
-        id:
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
           type: integer
           format: int64
-        name:
-          type: string
-        part:
-          type: string
+        sort:
+          "$ref": "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SliceChatHistoryResponse:
+      type: object
+      properties:
+        pageable:
+          "$ref": "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ChatHistoryResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          "$ref": "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        empty:
+          type: boolean
+        unsorted:
+          type: boolean
+  securitySchemes:
+    Bearer Authentication:
+      type: http
+      description: JWT 토큰을 입력하세요. 'Bearer ' 접두사는 자동으로 추가됩니다.
+      name: Bearer Authentication
+      in: header
+      scheme: bearer
+      bearerFormat: JWT
