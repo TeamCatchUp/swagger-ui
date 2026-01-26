@@ -298,6 +298,39 @@ paths:
             "*/*":
               schema:
                 "$ref": "#/components/schemas/MemberInfoResponse"
+  "/api/github/read/repositories":
+    get:
+      tags:
+      - github-read-controller
+      operationId: getRepositories
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/GithubRepoSummaryResponse"
+  "/api/github/read/repositories/{repositoryId}/files":
+    get:
+      tags:
+      - github-read-controller
+      operationId: getRepositoryFileTree
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FileTreeNode"
   "/api/chatrooms":
     get:
       tags:
@@ -607,6 +640,32 @@ components:
           type: string
         email:
           type: string
+    GithubRepoSummaryResponse:
+      type: object
+      properties:
+        repositoryId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        owner:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    FileTreeNode:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+        children:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FileTreeNode"
     Pageable:
       type: object
       properties:
@@ -656,6 +715,10 @@ components:
       properties:
         pageable:
           "$ref": "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
         size:
           type: integer
           format: int32
@@ -668,10 +731,6 @@ components:
           format: int32
         sort:
           "$ref": "#/components/schemas/SortObject"
-        first:
-          type: boolean
-        last:
-          type: boolean
         numberOfElements:
           type: integer
           format: int32
@@ -691,6 +750,10 @@ components:
       properties:
         pageable:
           "$ref": "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
         size:
           type: integer
           format: int32
@@ -703,10 +766,6 @@ components:
           format: int32
         sort:
           "$ref": "#/components/schemas/SortObject"
-        first:
-          type: boolean
-        last:
-          type: boolean
         numberOfElements:
           type: integer
           format: int32
@@ -742,6 +801,10 @@ components:
       properties:
         pageable:
           "$ref": "#/components/schemas/PageableObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
         size:
           type: integer
           format: int32
@@ -754,10 +817,6 @@ components:
           format: int32
         sort:
           "$ref": "#/components/schemas/SortObject"
-        first:
-          type: boolean
-        last:
-          type: boolean
         numberOfElements:
           type: integer
           format: int32
