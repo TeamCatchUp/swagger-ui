@@ -12,6 +12,35 @@ servers:
 security:
 - Bearer Authentication: []
 paths:
+  "/api/v1/github/webhook":
+    post:
+      tags:
+      - github-webhook-controller
+      operationId: handleWebhook
+      parameters:
+      - name: X-Github-Event
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Hub-Signature-256
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
   "/api/notion/sync/users":
     post:
       tags:
@@ -146,13 +175,7 @@ paths:
     post:
       tags:
       - meili-search-controller
-      operationId: addOrUpdateDocument
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/MeiliSearchDocumentRequest"
-        required: true
+      operationId: syncDocuments
       responses:
         '200':
           description: OK
@@ -280,23 +303,51 @@ paths:
       tags:
       - chat-room-controller
       operationId: getChatRooms
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          "$ref": "#/components/schemas/Pageable"
       responses:
         '200':
           description: OK
           content:
             "*/*":
               schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/ChatRoomResponse"
-  "/api/chatrooms/messages":
+                "$ref": "#/components/schemas/SliceChatRoomResponse"
+  "/api/chatrooms/{sessionId}/queries":
+    get:
+      tags:
+      - chat-room-controller
+      operationId: getUserQueryHistories
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          "$ref": "#/components/schemas/Pageable"
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SliceUserQueryHistoryResponse"
+  "/api/chatrooms/{sessionId}/messages":
     get:
       tags:
       - chat-room-controller
       operationId: getChatHistory
       parameters:
       - name: sessionId
-        in: query
+        in: path
         required: true
         schema:
           type: string
@@ -313,6 +364,24 @@ paths:
             "*/*":
               schema:
                 "$ref": "#/components/schemas/SliceChatHistoryResponse"
+  "/api/chatrooms/queries":
+    get:
+      tags:
+      - chat-room-controller
+      operationId: getAllUserQueryHistories
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          "$ref": "#/components/schemas/Pageable"
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SliceUserQueryHistoryResponse"
 components:
   schemas:
     JiraSyncRequest:
@@ -368,48 +437,6 @@ components:
         branch:
           type: string
           minLength: 1
-    JiraIssueDocument:
-      allOf:
-      - "$ref": "#/components/schemas/MeiliSearchDocument"
-      - type: object
-        properties:
-          id:
-            type: string
-          summary:
-            type: string
-          description:
-            type: string
-          createdAt:
-            type: string
-          resolutionDate:
-            type: string
-          assigneeId:
-            type: string
-          creatorId:
-            type: string
-          reporterId:
-            type: string
-    MeiliSearchDocument:
-      type: object
-      discriminator:
-        propertyName: documentType
-      properties:
-        primaryKeyFieldName:
-          type: string
-        indexName:
-          type: string
-        documentType:
-          type: string
-      required:
-      - documentType
-    MeiliSearchDocumentRequest:
-      type: object
-      properties:
-        documents:
-          type: array
-          items:
-            oneOf:
-            - "$ref": "#/components/schemas/JiraIssueDocument"
     ClientChatRequest:
       type: object
       properties:
@@ -447,21 +474,21 @@ components:
         index:
           type: integer
           format: int32
-        is_cited:
+        isCited:
           type: boolean
-        source_type:
+        sourceType:
+          type: integer
+          format: int32
+        relevanceScore:
+          type: number
+          format: double
+        htmlUrl:
           type: string
-        text:
+        content:
           type: string
-        file_path:
+        owner:
           type: string
-        category:
-          type: string
-        source:
-          type: string
-        html_url:
-          type: string
-        language:
+        repo:
           type: string
     ClientChatResumeRequest:
       type: object
@@ -479,7 +506,7 @@ components:
         pr_number:
           type: integer
           format: int32
-        repo_name:
+        repo:
           type: string
         owner:
           type: string
@@ -580,17 +607,6 @@ components:
           type: string
         email:
           type: string
-    ChatRoomResponse:
-      type: object
-      properties:
-        sessionId:
-          type: string
-          format: uuid
-        title:
-          type: string
-        lastActiveTime:
-          type: string
-          format: date-time
     Pageable:
       type: object
       properties:
@@ -606,21 +622,15 @@ components:
           type: array
           items:
             type: string
-    ChatHistoryResponse:
+    ChatRoomResponse:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        role:
+        sessionId:
           type: string
-        content:
+          format: uuid
+        title:
           type: string
-        sources:
-          type: array
-          items:
-            "$ref": "#/components/schemas/ClientSource"
-        createdAt:
+        lastActiveTime:
           type: string
           format: date-time
     PageableObject:
@@ -641,27 +651,27 @@ components:
           "$ref": "#/components/schemas/SortObject"
         unpaged:
           type: boolean
-    SliceChatHistoryResponse:
+    SliceChatRoomResponse:
       type: object
       properties:
         pageable:
           "$ref": "#/components/schemas/PageableObject"
-        first:
-          type: boolean
-        last:
-          type: boolean
         size:
           type: integer
           format: int32
         content:
           type: array
           items:
-            "$ref": "#/components/schemas/ChatHistoryResponse"
+            "$ref": "#/components/schemas/ChatRoomResponse"
         number:
           type: integer
           format: int32
         sort:
           "$ref": "#/components/schemas/SortObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
         numberOfElements:
           type: integer
           format: int32
@@ -675,6 +685,83 @@ components:
         empty:
           type: boolean
         unsorted:
+          type: boolean
+    SliceUserQueryHistoryResponse:
+      type: object
+      properties:
+        pageable:
+          "$ref": "#/components/schemas/PageableObject"
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UserQueryHistoryResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          "$ref": "#/components/schemas/SortObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    UserQueryHistoryResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ChatHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        role:
+          type: string
+        content:
+          type: string
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClientSource"
+        createdAt:
+          type: string
+          format: date-time
+    SliceChatHistoryResponse:
+      type: object
+      properties:
+        pageable:
+          "$ref": "#/components/schemas/PageableObject"
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ChatHistoryResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          "$ref": "#/components/schemas/SortObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
           type: boolean
   securitySchemes:
     Bearer Authentication:
