@@ -131,6 +131,33 @@ paths:
                 type: object
                 additionalProperties:
                   type: string
+  "/api/jira/issues":
+    get:
+      tags:
+      - jira-controller
+      operationId: getRecentlyReadIssues
+      responses:
+        '200':
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/JiraIssueResponse"
+    post:
+      tags:
+      - jira-controller
+      operationId: saveRecentlyReadIssue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SaveRecentlyReadIssueRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
   "/api/github/sync/retry":
     post:
       tags:
@@ -434,6 +461,14 @@ components:
             type: string
       required:
       - startFrom
+    SaveRecentlyReadIssueRequest:
+      type: object
+      properties:
+        issueId:
+          type: integer
+          format: int32
+      required:
+      - issueId
     GithubRetryRequest:
       type: object
       properties:
@@ -640,6 +675,33 @@ components:
           type: string
         email:
           type: string
+    JiraIssueResponse:
+      type: object
+      properties:
+        issueId:
+          type: integer
+          format: int32
+        issueKey:
+          type: string
+        issueUrl:
+          type: string
+        issueTypeName:
+          type: string
+        projectName:
+          type: string
+        summary:
+          type: string
+        parentIssueSummaries:
+          type: array
+          items:
+            type: string
+        childrenIssueSummaries:
+          type: array
+          items:
+            type: string
+        resolutionDate:
+          type: string
+          format: date-time
     GithubRepoSummaryResponse:
       type: object
       properties:
